@@ -1,0 +1,27 @@
+{
+  "name": "wechaty-plugin-robot",
+  "version": "1.0.0",
+  "description": "a plugin test robot",
+  "main": "index.js",
+  "scripts": {
+    "serve": "node index"
+  },
+  "keywords": [
+    "wechaty"
+  ],
+  "author": "isboyjc",
+  "license": "ISC",
+  "dependencies": {
+    "koa-static": "^5.0.0",
+    "qrcode-terminal": "^0.12.0",
+    "wechaty": "0.39.30",
+    "wechaty-friend-pass": "^0.0.1",
+    "wechaty-plugin-contrib": "^0.6.23",
+    "wechaty-puppet-padplus": "0.7.15",
+    "wechaty-room-clock": "^0.0.1",
+    "wechaty-room-invite": "^0.0.1",
+    "wechaty-room-remove": "^0.0.1",
+    "wechaty-room-welcome": "^0.0.1",
+    "wechaty-voteout": "0.0.3"
+  }
+}
