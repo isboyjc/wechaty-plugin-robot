@@ -7,6 +7,7 @@ yarn-error.log*
 package-lock.json
 tests/**/coverage/
 圈子.clock-logs/
+圈子.luckdraw-logs/
 圈子.memory-card.json
 plugin/
 config.js

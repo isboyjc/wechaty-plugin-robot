@@ -1,31 +1,32 @@
 const { Wechaty } = require("wechaty") // Wechaty核心包
-const { PuppetPadplus } = require("wechaty-puppet-padplus") // padplus协议包
+const { ScanStatus } = require('wechaty-puppet')
+const QrcodeTerminal = require('qrcode-terminal')
 
-const { PUPPET_PADPLUS_TOKEN, ROBOT_NAME } = require("./config") // token & robotName 脱敏源
-const WechatyFriendPass = require("wechaty-friend-pass") // plugin 好友申请自动通过
-const WechatyRoomWelcome = require("wechaty-room-welcome") // plugin 加入房间欢迎
-const WechatyRoomInvite = require("wechaty-room-invite") // plugin 加入房间邀请
-const WechatyRoomRemove = require("wechaty-room-remove") // plugin 快捷自动移出群聊
-const WechatyRoomClock = require("wechaty-room-clock") // plugin 积分打卡签到
+const { PUPPET_DONUT_TOKEN, ROBOT_NAME } = require("./config") // token & robotName 脱敏源
+const WechatyFriendPass = require("./plugin/wechaty-friend-pass") // plugin 好友申请自动通过
+const WechatyRoomWelcome = require("./plugin/wechaty-room-welcome") // plugin 加入房间欢迎
+const WechatyRoomInvite = require("./plugin/wechaty-room-invite") // plugin 加入房间邀请
+const WechatyRoomRemove = require("./plugin/wechaty-room-remove") // plugin 快捷自动移出群聊
+const WechatyRoomClock = require("./plugin/wechaty-room-clock") // plugin 积分打卡签到
+const WechatyRoomLuckdraw = require("./plugin/wechaty-room-luckdraw") // plugin 抽奖
 
-const WechatyVoteoutPlugin = require("wechaty-voteout") // 投票功能
+const { VoteOut: WechatyVoteoutPlugin } = require("wechaty-voteout") // 投票功能
 
 // QRCodeTerminal - 在终端显示扫描二维码插件
 // EventLogger - 官方 plugin 日志输出 config为数组，不提供默认输出全部事件
-// ManyToManyRoomConnector - 链接房间 把任何房间的信息广播到所有其他房间
 const {
   QRCodeTerminal,
   EventLogger,
-  ManyToManyRoomConnector,
 } = require("wechaty-plugin-contrib")
 
 // 初始化
 const bot = new Wechaty({
-  puppet: new PuppetPadplus({
-    token: PUPPET_PADPLUS_TOKEN,
-  }),
+  puppet: 'wechaty-puppet-hostie',
+  puppetOptions: {
+    token: PUPPET_DONUT_TOKEN,
+  },
   name: ROBOT_NAME,
-})
+});
 
 // 官方 plugin 在终端显示扫描二维码插件
 bot.use(
@@ -37,25 +38,6 @@ bot.use(
 // 官方 plugin 日志输出
 bot.use(EventLogger())
 
-// 官方 plugin 链接房间 把任何房间的信息广播到所有其他房间
-// bot.use(
-//   ManyToManyRoomConnector({
-//     blacklist: [async () => true],
-//     many: [
-//       "10614174865@chatroom", // Web圈0x01
-//       "22825376327@chatroom", // Web圈0x02
-//       "24661539197@chatroom", // 微信机器人
-//     ],
-//     map: async (message) => {
-//       let roomName = await message.room().topic()
-//       let name = await message.room().alias(message.from())
-//       name ? null : (name = message.from().name())
-//       return `来自群聊【${roomName}】的【${name}】说 \n\n ${message.text()}`
-//     },
-//     whitelist: [async (message) => message.type() === bot.Message.Type.Text],
-//   })
-// )
-
 // plugin 自动通过好友申请
 bot.use(
   WechatyFriendPass({
@@ -64,6 +46,7 @@ bot.use(
       "前端",
       "后端",
       "全栈",
+      "其他",
       "公众号",
       "cesium",
       "github",
@@ -130,6 +113,7 @@ bot.use(
         roomId: "21705489152@chatroom",
         alias: "A03",
         label: "限制",
+        close: true,
       },
       {
         name: "微信机器人",
@@ -165,6 +149,14 @@ bot.use(
         name: "便便",
         id: "wxid_4mnet5yeqo5d21",
       },
+      {
+        name: "张玉",
+        id: "wxid_vvvkhgovki5n22",
+      },
+      {
+        name: "王培智",
+        id: "wxid_e53m1ijdx7kg12",
+      },
     ],
     time: 3000,
     replyDone: "done",
@@ -175,7 +167,20 @@ bot.use(
 // plugin 积分打卡签到
 bot.use(
   WechatyRoomClock({
-    keyword: ["签到", "打卡"],
+    keyword: ["签到", "打卡", "滴", "滴滴", "滴滴滴", "我真帅", "我真美"],
+    exclusiveKeyword: [
+      {
+        id: "wxid_nrsh4yc8yupm22",
+        name: "isboyjc",
+        keyword: ["我太难了"],
+      },
+      {
+        id: "wxid_e53m1ijdx7kg12",
+        name: "小智",
+        keyword: ["加薪成功"],
+      },
+    ],
+    timeInterval: [["07:30:00", "09:30:00"], ["17:30:00", "19:30:00"]],
     success: (data) => {
       let str = "\n签到成功\n"
       Object.keys(data.CLOCKINFO).map(
@@ -184,12 +189,56 @@ bot.use(
       return str + `共累计签到${data.CLOCKNUM}次`
       //  + `\n拥有${data.INTEGRALNUM}积分`
     },
-    repeat: () => `今日已签到，请勿重复签到`,
+    repeat: (data) => {
+      return `\n今日已签到，请勿重复签到，共累计签到${data.CLOCKNUM}次！`
+    },
   })
 )
 
+// 群聊抽奖
+bot.use(WechatyRoomLuckdraw({
+  admin: [
+    {
+      name: "isboyjc",
+      id: "wxid_nrsh4yc8yupm22",
+    }
+  ],
+  prize: [
+    {
+      id: "1",
+      name: "JavaScript语言精髓与编程实践1本",
+    },
+    {
+      id: "2",
+      name: "JavaScript权威指南1本",
+    },
+    {
+      id: "3",
+      name: "50元红包1个",
+    }
+  ],
+  start: "2021-01-07",
+  keyword: ["抽奖"],
+  success: () => "抽奖参与成功，本次抽奖于2020-01-07日开始，2020-01-15 21:00:00结束，同日 21:30:00 自动开奖，并发送至群聊中",
+  repeat: (data) => `\n已于${data.DATE} ${data.TIME}参与抽奖，请勿重复抽奖！`,
+}))
+
 // 投票
-bot.use(WechatyVoteoutPlugin({ target: 5 }))
+bot.use(WechatyVoteoutPlugin({
+  room: ["10614174865@chatroom", "22825376327@chatroom", "21705489152@chatroom", "24661539197@chatroom", "22275855499@chatroom"],
+  threshold: 5,
+  whitelist: [],
+  downEmoji: [
+    '[弱]',
+    '[ThumbsDown]',
+    '<img class="qqemoji qqemoji80" text="[弱]_web" src="/zh_CN/htmledition/v2/images/spacer.gif" />',
+  ],
+  warn: [
+    '可能是因为你的聊天内容不当导致被用户投票，当前票数为 {{ downNum }}，当天累计票数达到 {{ threshold }} 时，你将被请出此群。',
+  ],
+  kick: '经 {{ voters }} 几人投票，你即将离开此群。',
+  repeat: '你已经投票过 {{ votee }} 了，无需再投。',
+}))
 
 bot
   .on("error", (error) => {
